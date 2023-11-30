@@ -1,0 +1,23 @@
+template:
+  - charts:
+      - type: pie
+        id: piechart1
+        formula:
+          categories: ["main_categories"]
+        title: Overview 1
+      - type: table
+        id: tablechart1
+        formula:
+          columns: ["sum", "cat"]
+          categories: ["main_categories"]
+        columns: "Category, Total"
+        title: Overview 2
+  - charts:
+      - type: budget
+        id: budgetchart1
+        title: Monthly budget
+        properties:
+          budgets:
+            food: 450
+            shopping: 700
+            body_and_hygiene: 100
