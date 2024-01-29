@@ -10,7 +10,6 @@ import random
 from datetime import date
 
 
-
 @pytest.fixture
 def category_list():
     return [

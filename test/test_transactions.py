@@ -49,7 +49,7 @@ def test_add_transaction(client, patch_transaction):
     response_post = client.post(
         f"/api/accounts/myaccount/transactions/{year}/{month}/{day}",
         content=json.dumps(
-            {"value": "123.45", "description": "Test", "categories": ["kaufhoff"]}
+            {"value": "12345", "description": "Test", "categories": ["kaufhoff"]}
         ),
     )
     id = response_post.json()["id"]
@@ -76,10 +76,11 @@ def test_edit_transaction(client, patch_transaction):
     response_post = client.post(
         f"/api/accounts/myaccount/transactions/{year}/{month}/{day}",
         content=json.dumps(
-            {"value": "123.45", "description": "Test", "categories": ["kaufhoff"]}
+            {"value": "12345", "description": "Test", "categories": ["kaufhoff"]}
         ),
     )
     id = response_post.json()["id"]
+    print(">>>", id)
 
     response_post = client.put(
         f"/api/accounts/myaccount/transactions?id={id}",
@@ -108,12 +109,12 @@ def test_delete_transaction(client, patch_transaction):
     response_post = client.post(
         f"/api/accounts/myaccount/transactions/{year}/{month}/{day}",
         content=json.dumps(
-            {"value": "123.45", "description": "Test", "categories": ["kaufhoff"]}
+            {"value": "12345", "description": "Test", "categories": ["kaufhoff"]}
         ),
     )
     id = response_post.json()["id"]
 
-    response_post = client.delete(f"/api/accounts/myaccount/transactions?id={id}")
+    client.delete(f"/api/accounts/myaccount/transactions?id={id}")
 
     date_from, date_to = date(2024, 1, 1), date(2025, 12, 31)
     response_get = client.get(

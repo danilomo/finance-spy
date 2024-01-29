@@ -39,3 +39,5 @@ uvicorn==0.23.2
 uvloop==0.17.0
 watchfiles==0.19.0
 websockets==11.0.3
+financespy~=0.0.1
+setuptools~=59.6.0
