@@ -24,9 +24,9 @@ export default function TransactionsTable() {
     if (!changes) {
       return;
     }
-
-    if (changes.id == "new") {
-      console.log(JSON.stringify(changes) + "+++++");
+    console.log(JSON.stringify(changes) + "+++++");
+    
+    if (changes.id == "new") {      
       const [year, month, day] = changes.date.split("-");
 
       await post(

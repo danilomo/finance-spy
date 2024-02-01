@@ -1,6 +1,26 @@
 import { createContext, useContext } from "react";
+import * as chroma from 'chroma-js';
 
-type Category = string | { [Name: string]: Category[] };
+function generateColors(n: number) {
+  let colors = chroma.scale(["#ccbdff", "#fef1ac"]).colors(n);
+  return colors;
+}
+
+function debug(obj: any) {
+  console.log(JSON.stringify(obj, null, 2));
+}
+
+type Categories = {
+  categoryList: string[],
+  categoryMap: Record<string, string>
+  topLevelCategories: string[],
+  colorMap: Record<string, string>,
+  categoryTree: Category[]
+};
+
+type CategoryWithChildren = { [Name: string]: Category[] };
+
+type Category = string | CategoryWithChildren;
 
 const categories: Category[] = [
   {
@@ -128,21 +148,21 @@ const categories: Category[] = [
   },
 ];
 
-function walkCategories(catlist: string[], catobj: Category[]) {
+function walkCategories(catobj: Category[], consumer: (a: string) => void) {
   catobj.forEach((cat) => {
     if (typeof cat === "string") {
-      catlist.push(cat);
+      consumer(cat)
     }
 
     if (typeof cat === "object") {
       const [catname, children] = Object.entries(cat)[0];
-      catlist.push(catname);
-      walkCategories(catlist, children);
+      consumer(catname);
+      walkCategories(children, consumer);
     }
   });
 }
 
-const CategoryList = createContext<string[]>([]);
+const CategoryList = createContext<Categories | null>(null);
 
 function CategoryContext({
   children,
@@ -150,10 +170,49 @@ function CategoryContext({
   children: JSX.Element | JSX.Element[];
 }) {
   const categoryList: string[] = [];
-  walkCategories(categoryList, categories);
+  walkCategories(
+    categories, 
+    (x: string) => { 
+      if (categoryList.includes(x)) {
+        return;
+      }
+      
+      categoryList.push(x);
+    }
+  );
+
+  const categoryMap: Record<string, string> = {};
+  const topLevelCategories: string[] = [];
+
+  (categories[0] as CategoryWithChildren)["expenses"].forEach((cat) => {
+    if (typeof (cat) == "string") {
+      const catName = cat as string;
+      categoryMap[cat as string] = catName;
+      topLevelCategories.push(catName);
+      return;
+    }
+    const catName = Object.keys(cat)[0];
+    topLevelCategories.push(catName);
+    walkCategories([cat], (c) => { categoryMap[c] = catName });
+  });
+
+  const colorMap: Record<string, string> = {};
+  const colors = generateColors(topLevelCategories.length);
+
+  for (let i = 0; i < colors.length; i++) {
+    colorMap[topLevelCategories[i]] = colors[i];
+  }
+
+  const categoriesObject: Categories = {
+    categoryList,
+    categoryMap,
+    topLevelCategories,
+    colorMap,
+    categoryTree: categories
+  };
 
   return (
-    <CategoryList.Provider value={categoryList}>
+    <CategoryList.Provider value={categoriesObject}>
       {children}
     </CategoryList.Provider>
   );

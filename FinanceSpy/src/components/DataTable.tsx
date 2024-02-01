@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import {
+  TextField,
+  Button,
+  Autocomplete,
   Table,
   TableBody,
   TableCell,
@@ -23,6 +26,9 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import { CategoryContext, useCategories } from "../context/CategoriesContext";
+import { Chip, Popover } from '@mui/material';
+
 
 function CustomToolbar(props) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -77,7 +83,14 @@ const DateInput = (props: any) => {
   return (
     <>
       {props.editMode ? (
-        <DatePicker value={value} onChange={handleChange} />
+        <DatePicker
+          slotProps={{
+            textField: {
+              size: 'small', // This changes the size of the TextField
+            },
+          }}
+          value={value}
+          onChange={handleChange} />
       ) : (
         <span>
           {value ? dayjs(value).format("DD MMM YYYY") : "No date selected"}
@@ -87,11 +100,81 @@ const DateInput = (props: any) => {
   );
 };
 
+const CategoryInput = (props) => {
+  const [values, setValues] = useState(props.value);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [expanded, setExpanded] = useState(false);
+  const categories = useCategories();
+
+  if (props.editMode) {
+    return <Autocomplete
+      multiple
+      value={values}
+      options={categories?.categoryList}
+      renderInput={(params) => <TextField {...params} label="Choose a category" />}
+      onChange={(event, newValue) => {
+        props.onChange("categories", newValue);
+        setValues(newValue);
+      }}
+    />
+  }
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+    setExpanded(true);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setExpanded(false);
+  };
+
+  const colorFrom = (val) => {
+    const topCategory = categories.categoryMap[val];
+    return categories.colorMap[topCategory] || "lightgray";
+  };
+
+  return (
+    <>
+      {values.length === 1 ? (
+        <Chip label={values[0]} style={{ backgroundColor: colorFrom(values[0]) }} title={categories.categoryMap[values[0]]} />
+      ) : (
+        <>
+          <Chip label={values[0]} style={{ backgroundColor: colorFrom(values[0]) }} title={categories.categoryMap[values[0]]} />
+          <Button onClick={handleClick}>+{values.length - 1}</Button>
+          <Popover
+            open={expanded}
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
+            }}
+          >
+            {values.slice(1).map((string, index) => {
+              return (
+                <Chip
+                  key={index}
+                  label={string}
+                  style={{ backgroundColor: colorFrom(string) }}
+                  title={categories.categoryMap[string]} />
+              );
+            })}
+          </Popover>
+        </>
+      )}
+    </>
+  );
+};
+
 const MoneyInput = (props: any) => {
   const [value, setValue] = useState(props.value);
 
   const handleChange = (event: any) => {
-    // Ensure the value is a multiple of 0.10 and is non-negative
     const newValue = Math.max(0, Math.round(event.target.value * 10) / 10);
     setValue(newValue);
     props.onChange("value", parseInt(newValue * 100));
@@ -103,6 +186,7 @@ const MoneyInput = (props: any) => {
         <input
           type="number"
           id="money"
+          size="medium"
           value={value}
           onChange={handleChange}
           placeholder="0.00"
@@ -125,7 +209,7 @@ const CellValue = (props) => {
     return <MoneyInput onChange={props.onChange} value={props.value} editMode={props.editMode} />;
   }
 
-  return <span>{props.value}</span>;
+  return <CategoryInput onChange={props.onChange} value={props.value} editMode={props.editMode}  />
 };
 
 const DataTable = ({ data, onEdit, onDelete }: any) => {
@@ -135,7 +219,7 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
   const [editModeRow, setEditModeRow] = useState("");
   const [rowChanges, setRowChanges] = useState({});
   const [newRecord, setNewRecord] = useState(null);
-  const [deleteRowId, setDeleteRowId] = useState(""); 
+  const [deleteRowId, setDeleteRowId] = useState("");
 
   useEffect(() => {
     setSelected([]);
@@ -172,7 +256,9 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
     setSelected(data.map((row) => row.id));
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = (row) => {
+    const id = row.id;
+
     if (editModeRow == id) {
       onEdit(rowChanges);
       setEditModeRow("");
@@ -182,7 +268,7 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
     }
 
     setNewRecord(null);
-    setRowChanges({});
+    setRowChanges({ ...row, value: parseInt(row.value * 100) });
     setEditModeRow(id);
   };
 
@@ -260,8 +346,26 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
     }
   };
 
+  const tableHeader = (<TableRow>
+    <TableCell padding="checkbox">
+      <Checkbox onClick={selectAll} />
+    </TableCell>
+    {["Date", "Value", "Categories"].map((key) => (
+      <TableCell key={key}>
+        <TableSortLabel
+          active={orderBy === key}
+          direction={orderBy === key ? order : "asc"}
+          onClick={() => handleSort(key)}
+        >
+          <span style={{ fontWeight: "bold" }}>{key}</span>
+        </TableSortLabel>
+      </TableCell>
+    ))}
+    <TableCell></TableCell>
+  </TableRow>);
+
   const tableBody = sortedData.map((row) => {
-    const editMode = row["id"] == editModeRow;
+    const editMode = editModeRow != "" || deleteRowId != "";
 
     return (
       <TableRow key={row.id}>
@@ -275,26 +379,31 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
           .map((col) => [col, row[col]])
           .map(([col, value], i) => (
             <TableCell key={i}>
-              <CellValue value={value} type={col} editMode={editMode} onChange={onCellChange(row)} />
+              <CellValue value={value} type={col} editMode={editModeRow == row.id} onChange={onCellChange(row)} />
             </TableCell>
           ))}
         <TableCell>
-          {!(editMode || deleteRowId) && (
-            <IconButton size="small" onClick={() => handleEdit(row.id)}>
+          {!editMode && (
+            <IconButton size="small" onClick={() => handleEdit(row)}>
               <Edit fontSize="inherit" />
             </IconButton>
           )}
-          {!(editMode) && (
+          {!editMode && (
             <IconButton size="small" onClick={() => handleDelete(row.id)}>
               <Delete fontSize="inherit" />
             </IconButton>
           )}
-          {(editMode) && (
-            <IconButton size="small" onClick={() => handleEdit(row.id)} >
+          {(editMode && editModeRow == row.id) && (
+            <IconButton size="small" onClick={() => handleEdit(row)} >
               <Save fontSize="inherit" />
             </IconButton>
           )}
-          {(editMode || deleteRowId) && (
+          {deleteRowId == row.id && (
+            <IconButton size="small" onClick={() => handleDelete(row.id)}>
+              <Delete fontSize="inherit" />
+            </IconButton>
+          )}
+          {(editMode && (editModeRow == row.id || deleteRowId == row.id)) && (
             <IconButton size="small" onClick={() => handleCancelEdit(row.id)}>
               <Cancel fontSize="inherit" />
             </IconButton>
@@ -310,23 +419,7 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
         <CustomToolbar {...menuHandler} />
         <Table>
           <TableHead style={{ backgroundColor: "lightgray" }}>
-            <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox onClick={selectAll} />
-              </TableCell>
-              {["Date", "Value", "Categories"].map((key) => (
-                <TableCell key={key}>
-                  <TableSortLabel
-                    active={orderBy === key}
-                    direction={orderBy === key ? order : "asc"}
-                    onClick={() => handleSort(key)}
-                  >
-                    <span style={{ fontWeight: "bold" }}>{key}</span>
-                  </TableSortLabel>
-                </TableCell>
-              ))}
-              <TableCell></TableCell>
-            </TableRow>
+            {tableHeader}
           </TableHead>
           <TableBody>{tableBody}</TableBody>
         </Table>

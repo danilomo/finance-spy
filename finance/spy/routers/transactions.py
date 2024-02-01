@@ -7,17 +7,17 @@ from financespy import parse_month
 from datetime import date
 
 from starlette.responses import Response
+from starlette.requests import Request
 from starlette.status import HTTP_204_NO_CONTENT
 
 from .dependencies import open_account, DateRange, date_range
-
 
 router = APIRouter(prefix="/api/accounts/{account}/transactions")
 
 
 @router.get("/", response_model=list[TransactionModel])
 def list_transactions(
-    account: Account = Depends(open_account), range: DateRange = Depends(date_range)
+        account: Account = Depends(open_account), range: DateRange = Depends(date_range)
 ):
     return [
         trans.to_model_obj()
@@ -25,6 +25,18 @@ def list_transactions(
             date_from=range.date_from, date_to=range.date_to
         )
     ]
+
+
+@router.get(
+    "/export",
+    response_class=Response
+)
+def list_transactions(
+        request: Request,
+        account: Account = Depends(open_account),
+        range: DateRange = Depends(date_range)
+):
+    pass
 
 
 @router.get("/{year}/{month}", response_model=list[TransactionModel])
@@ -36,7 +48,7 @@ def month_all(year: int, month: str, account: Account = Depends(open_account)):
 
 @router.get("/{year}/{month}/{details}", response_model=list[TransactionModel])
 def month_details(
-    year: int, month: str, details: str, account: Account = Depends(open_account)
+        year: int, month: str, details: str, account: Account = Depends(open_account)
 ):
     if details == "weeks":
         result = month_weeks(account, year, month)
@@ -50,11 +62,11 @@ def month_details(
 
 @router.post("/{year}/{month}/{day}")
 def insert_record(
-    transaction: TransactionModel,
-    year: int,
-    month: str,
-    day: int,
-    account: Account = Depends(open_account),
+        transaction: TransactionModel,
+        year: int,
+        month: str,
+        day: int,
+        account: Account = Depends(open_account),
 ):
     id = account.insert_record(
         date(year=year, month=parse_month(month), day=day),
@@ -68,12 +80,10 @@ def insert_record(
 
 @router.put("/")
 def edit_record(
-    transaction: TransactionModel,
-    id: str,
-    account: Account = Depends(open_account),
+        transaction: TransactionModel,
+        id: str,
+        account: Account = Depends(open_account),
 ):
-    print(str(transaction))
-
     transaction.id = id
     account.update_record(
         Transaction.to_transaction(
@@ -86,8 +96,8 @@ def edit_record(
 
 @router.delete("/{id}")
 def delete_record(
-    id: str,
-    account: Account = Depends(open_account),
+        id: str,
+        account: Account = Depends(open_account),
 ):
     account.delete_record(id)
     return Response(status_code=HTTP_204_NO_CONTENT)
