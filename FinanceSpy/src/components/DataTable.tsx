@@ -43,21 +43,21 @@ function CustomToolbar(props) {
 
   return (
     <Toolbar>
-      <Tooltip title="New record">
+      {props.config.newTransaction && <Tooltip title="New record">
         <IconButton aria-label="new record" onClick={props.onNewRecord}>
           <AddCircleOutlineIcon />
         </IconButton>
-      </Tooltip>
-      <Tooltip title="Delete selected records">
+      </Tooltip>}
+      {props.config.bulkDelete && <Tooltip title="Delete selected records">
         <IconButton aria-label="delete selected records" onClick={props.onBulkDelete}>
           <DeleteIcon />
         </IconButton>
-      </Tooltip>
-      <Tooltip title="Save table as...">
+      </Tooltip>}
+      {props.config.exportAction && <Tooltip title="Save table as...">
         <IconButton aria-label="save table as" onClick={handleClick}>
           <SaveAltIcon />
         </IconButton>
-      </Tooltip>
+      </Tooltip>}
       <Menu
         anchorEl={anchorEl}
         keepMounted
@@ -208,11 +208,14 @@ const CellValue = (props) => {
   if (props.type == "value") {
     return <MoneyInput onChange={props.onChange} value={props.value} editMode={props.editMode} />;
   }
+  if (props.type == "categories") {
+    return <CategoryInput onChange={props.onChange} value={props.value} editMode={props.editMode}  />
+  }
 
-  return <CategoryInput onChange={props.onChange} value={props.value} editMode={props.editMode}  />
+  return <span>{props.value}</span>
 };
 
-const DataTable = ({ data, onEdit, onDelete }: any) => {
+const DataTable = ({ data, onEdit, onDelete, config }: any) => {
   const [selected, setSelected] = useState([]);
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("");
@@ -220,6 +223,8 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
   const [rowChanges, setRowChanges] = useState({});
   const [newRecord, setNewRecord] = useState(null);
   const [deleteRowId, setDeleteRowId] = useState("");
+
+  const configOptions = config | {};
 
   useEffect(() => {
     setSelected([]);
@@ -350,7 +355,7 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
     <TableCell padding="checkbox">
       <Checkbox onClick={selectAll} />
     </TableCell>
-    {["Date", "Value", "Categories"].map((key) => (
+    {["Date", "Value", "Categories", "Description"].map((key) => (
       <TableCell key={key}>
         <TableSortLabel
           active={orderBy === key}
@@ -375,7 +380,7 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
             onChange={() => handleSelect(row.id)}
           />
         </TableCell>
-        {["date", "value", "categories"]
+        {["date", "value", "categories", "description"]
           .map((col) => [col, row[col]])
           .map(([col, value], i) => (
             <TableCell key={i}>
@@ -416,7 +421,7 @@ const DataTable = ({ data, onEdit, onDelete }: any) => {
   return (
     <div>
       <TableContainer component={Paper}>
-        <CustomToolbar {...menuHandler} />
+        <CustomToolbar {...menuHandler} config={configOptions} />
         <Table>
           <TableHead style={{ backgroundColor: "lightgray" }}>
             {tableHeader}

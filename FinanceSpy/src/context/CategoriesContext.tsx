@@ -6,10 +6,6 @@ function generateColors(n: number) {
   return colors;
 }
 
-function debug(obj: any) {
-  console.log(JSON.stringify(obj, null, 2));
-}
-
 type Categories = {
   categoryList: string[],
   categoryMap: Record<string, string>
@@ -171,12 +167,12 @@ function CategoryContext({
 }) {
   const categoryList: string[] = [];
   walkCategories(
-    categories, 
-    (x: string) => { 
+    categories,
+    (x: string) => {
       if (categoryList.includes(x)) {
         return;
       }
-      
+
       categoryList.push(x);
     }
   );

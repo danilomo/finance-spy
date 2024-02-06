@@ -1,10 +1,33 @@
 import { ChangeEvent, useEffect, useState, useReducer } from 'react';
-import { Button, Box } from '@mui/material';
+import { Button, Box, SelectChangeEvent } from '@mui/material';
 import { post } from '../commons/http';
-import { useParams } from 'react-router-dom';
 import DataTable from '../components/DataTable';
 import { match } from "ts-pattern";
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { useUserInformation } from '../context/UserContext';
 
+function AccountSelector({onAccountSelected}: {onAccountSelected: (account: string) => void}) {
+    const [selectedValue, setSelectedValue] = useState<string>(''); 
+    const { accounts } = useUserInformation();
+
+    const handleChange = (event: SelectChangeEvent<string>) => {
+        setSelectedValue(event.target.value as string); 
+        onAccountSelected(event.target.value);
+    };
+
+    return (
+        <FormControl fullWidth>
+            <InputLabel>Select an account</InputLabel>
+            <Select
+                value={selectedValue}
+                label="Select an account"
+                onChange={handleChange}
+            >
+                {accounts.map(account => <MenuItem value={account}>{account}</MenuItem>)}
+            </Select>
+        </FormControl>
+    );
+}
 type LoadTransactions = {
     type: "load",
     values: TransactionModel[]
@@ -82,9 +105,8 @@ const uploadRequest = {
 const CSVUploader = () => {
     const [file, setFile] = useState<File | null>(null);
     const [csvData, setCsvData] = useState<string | null>(null);
-    //const [transactions, setTransactions] = useState<TransactionModel[] | null>(null);
     const [transactions, transactionsDispatcher] = useReducer(transactionsReducer, []);
-    const account = "leilane_n26"; //useParams();
+    const [account, setAccount] = useState<string | null>(null);
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
@@ -104,7 +126,6 @@ const CSVUploader = () => {
                 result.output[index].id = "" + index;
             }
 
-            //setTransactions(result.output);
             transactionsDispatcher({ type: "load", values: result.output });
         }
         if (!account || !csvData) {
@@ -128,9 +149,9 @@ const CSVUploader = () => {
         };
         reader.readAsText(file);
     };
+    
 
     const onEdit = (changes: TransactionModel) => {
-        console.log(JSON.stringify(changes));
         transactionsDispatcher({ "type": "edit", changes });
     }
 
@@ -146,6 +167,7 @@ const CSVUploader = () => {
             }}
         >
             {transactions.length == 0 && <>
+                <AccountSelector onAccountSelected={setAccount}/>
                 <input type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} id="contained-button-file" />
                 <label htmlFor="contained-button-file">
                     <Button variant="contained" component="span">
@@ -161,9 +183,13 @@ const CSVUploader = () => {
                     data={transactions}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    config={{
+                        newTransaction: false,
+                        bulkDelete: false,
+                        exportAction: false
+                    }}
                 />
-            </>
-            }
+            </>}
 
         </Box>
     );

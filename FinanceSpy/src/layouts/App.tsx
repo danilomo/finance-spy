@@ -1,6 +1,7 @@
 import SidePanel from "../components/SidePanel";
 import { PropertiesContext } from "../context/ParametersContext";
 import { CategoryContext } from "../context/CategoriesContext";
+import { UserInformationProvider } from "../context/UserContext";
 import {
   createBrowserRouter,
   Outlet,
@@ -85,11 +86,13 @@ function Root() {
 
 const App = () => (
   <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <CategoryContext>
-      <PropertiesContext>
-        <RouterProvider router={router} />
-      </PropertiesContext>
-    </CategoryContext>
+    <UserInformationProvider>
+      <CategoryContext>
+        <PropertiesContext>
+          <RouterProvider router={router} />
+        </PropertiesContext>
+      </CategoryContext>
+    </UserInformationProvider>
   </LocalizationProvider>
 );
 

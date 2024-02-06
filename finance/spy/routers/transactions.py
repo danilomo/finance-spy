@@ -9,7 +9,6 @@ from financespy import parse_month
 from datetime import date
 
 from starlette.responses import Response
-from starlette.requests import Request
 from starlette.status import HTTP_204_NO_CONTENT
 
 from .dependencies import open_account, DateRange, date_range

@@ -13,19 +13,16 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CategoryIcon from '@mui/icons-material/Category';
 import PublishIcon from '@mui/icons-material/Publish';
+import { useUserInformation } from "../context/UserContext";
 
 type UserLinks = {
   accounts: Array<[string, string]>;
   dashboards: [string, string][];
 };
 
-async function getLinks(account: string | undefined): Promise<UserLinks> {
-  const accounts: string[] = await get<string[]>("api/accounts");
-  let dashboards: string[] = [];
-
-  if (account) {
-    dashboards = (await get("api/dashboards")) as string[];
-  }
+function useLinks() {
+  const {accounts, dashboards} = useUserInformation();
+  const {account} = useParams();
 
   const accs: Array<[string, string]> = accounts.map((a) => [
     `/accounts/${a}`,
@@ -43,12 +40,7 @@ async function getLinks(account: string | undefined): Promise<UserLinks> {
 }
 
 export default function SidePanel() {
-  let { account } = useParams();
-  let [links, setLinks] = useState<UserLinks>({ accounts: [], dashboards: [] });
-
-  useEffect(() => {
-    getLinks(account).then(setLinks);
-  }, [account]);
+  const links = useLinks();
 
   return (
     <>
