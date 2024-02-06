@@ -19,6 +19,8 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import Dashboard from "../views/Dashboard";
+import TreeEditor from "../views/Categories";
+import CSVUploader from "../views/Import";
 
 const Layout = () => {
   return (
@@ -74,6 +76,8 @@ function Root() {
           path="accounts/:account/dashboards/:dashboard"
           element={<Dashboard />}
         />
+        <Route path="categories" element={<TreeEditor />} />
+        <Route path="import" element={<CSVUploader />} />
       </Route>
     </Routes>
   );

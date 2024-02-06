@@ -194,7 +194,7 @@ const MoneyInput = (props: any) => {
           min="0"
         />
       ) : (
-        <span>{value.toFixed(2)} €</span>
+        <span>{value} €</span>
       )}
     </>
   );

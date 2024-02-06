@@ -3,6 +3,8 @@ import logging
 from fastapi import APIRouter, Depends
 from financespy import Transaction, Account
 from financespy.models import TransactionModel
+from finance.spy.importer.models import ImportInput, ImportOutput
+from finance.spy.importer import import_transactions
 from financespy import parse_month
 from datetime import date
 
@@ -13,6 +15,18 @@ from starlette.status import HTTP_204_NO_CONTENT
 from .dependencies import open_account, DateRange, date_range
 
 router = APIRouter(prefix="/api/accounts/{account}/transactions")
+
+
+@router.post("/", response_model=list[str])
+def insert_transactions(
+        transactions: list[TransactionModel],
+        account: Account = Depends(open_account),
+):
+    ids = list(
+        account.insert_record(trans.date, Transaction.to_transaction(trans, account.categories))
+        for trans in transactions
+    )
+    return list(str(id) for id in ids)
 
 
 @router.get("/", response_model=list[TransactionModel])
@@ -27,16 +41,12 @@ def list_transactions(
     ]
 
 
-@router.get(
-    "/export",
-    response_class=Response
+@router.post(
+    "/import",
+    response_model=ImportOutput
 )
-def list_transactions(
-        request: Request,
-        account: Account = Depends(open_account),
-        range: DateRange = Depends(date_range)
-):
-    pass
+def import_trans(importer_input: ImportInput, account: Account = Depends(open_account)):
+    return import_transactions(account, importer_input)
 
 
 @router.get("/{year}/{month}", response_model=list[TransactionModel])

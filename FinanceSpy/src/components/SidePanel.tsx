@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import CategoryIcon from '@mui/icons-material/Category';
+import PublishIcon from '@mui/icons-material/Publish';
 
 type UserLinks = {
   accounts: Array<[string, string]>;
@@ -81,6 +83,22 @@ export default function SidePanel() {
               </ListItemButton>
             </ListItem>
           ))}
+          <ListItem>
+            <ListItemIcon>
+              <CategoryIcon />
+            </ListItemIcon>
+            <ListItemButton to={"categories"} component={Link}>
+              <ListItemText primary="Categories" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <PublishIcon />
+            </ListItemIcon>
+            <ListItemButton to={"import"} component={Link}>
+              <ListItemText primary="Import" />
+            </ListItemButton>
+          </ListItem>          
         </List>
       )}
     </>

@@ -20,7 +20,7 @@ type Categories = {
 
 type CategoryWithChildren = { [Name: string]: Category[] };
 
-type Category = string | CategoryWithChildren;
+export type Category = string | CategoryWithChildren;
 
 const categories: Category[] = [
   {
